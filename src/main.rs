@@ -30,5 +30,30 @@ fn main() {
             process::exit(1)
         }
     };
+
+    match validate_config(&config) {
+        Ok(_) => (),
+        Err(e) => {
+            eprintln!("error: {}", e);
+            process::exit(1)
+        }
+    };
+
     println!("{:?}", config);
+}
+
+fn validate_config(config: &Config) -> Result<(), String> {
+    if !config.src.exists() {
+        return Err(format!("source does not exist"));
+    } else if !config.src.is_dir() {
+        return Err(format!("source is not a directory"));
+    }
+
+    if !config.dest.exists() {
+        return Err(format!("destination does not exist"));
+    } else if !config.dest.is_dir() {
+        return Err(format!("destination is not a directory"));
+    }
+
+    return Ok(());
 }
