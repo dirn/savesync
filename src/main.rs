@@ -1,13 +1,20 @@
 use std::env;
+use std::process;
 
 fn main() {
     match env::var("RETRO_SAVES") {
         Ok(val) => println!("RETRO_SAVES: {}", val),
-        Err(e) => println!("RETRO_SAVES: {}", e),
+        Err(e) => {
+            eprintln!("RETRO_SAVES: {}", e);
+            process::exit(1);
+        }
     }
 
     match env::var("RETRO_GAMES") {
         Ok(val) => println!("RETRO_GAMES: {}", val),
-        Err(e) => println!("RETRO_GAMES: {}", e),
+        Err(e) => {
+            eprintln!("RETRO_GAMES: {}", e);
+            process::exit(1);
+        }
     }
 }
