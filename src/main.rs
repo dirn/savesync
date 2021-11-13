@@ -1,3 +1,8 @@
+use std::env;
+
 fn main() {
-    println!("Hello, world!");
+    match env::var("RETRO_GAMES") {
+        Ok(val) => println!("RETRO_GAMES: {}", val),
+        Err(e) => println!("RETRO_GAMES: {}", e),
+    }
 }
