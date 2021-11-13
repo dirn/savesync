@@ -1,6 +1,7 @@
 use std::env;
 use std::process;
 
+#[derive(Debug)]
 struct Config {
     src: String,
     dest: String,
@@ -28,6 +29,5 @@ fn main() {
             process::exit(1)
         }
     };
-    println!("source: {}", config.src);
-    println!("destination: {}", config.dest);
+    println!("{:?}", config);
 }
