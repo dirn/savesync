@@ -17,10 +17,7 @@ fn load_configuration_from_environment() -> Result<Config, String> {
         Err(e) => return Err(format!("RETRO_GAMES: {}", e)),
     };
 
-    return Ok(Config {
-        src: src,
-        dest: dest,
-    });
+    return Ok(Config { src, dest });
 }
 
 fn main() {
