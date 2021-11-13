@@ -1,0 +1,3 @@
+# SaveSync
+
+Synchronize game saves.
