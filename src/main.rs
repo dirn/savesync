@@ -1,20 +1,36 @@
 use std::env;
 use std::process;
 
-fn main() {
-    match env::var("RETRO_SAVES") {
-        Ok(val) => println!("RETRO_SAVES: {}", val),
-        Err(e) => {
-            eprintln!("RETRO_SAVES: {}", e);
-            process::exit(1);
-        }
-    }
+struct Config {
+    src: String,
+    dest: String,
+}
 
-    match env::var("RETRO_GAMES") {
-        Ok(val) => println!("RETRO_GAMES: {}", val),
+fn load_configuration_from_environment() -> Result<Config, String> {
+    let src = match env::var("RETRO_SAVES") {
+        Ok(val) => val,
+        Err(e) => return Err(format!("RETRO_SAVES: {}", e)),
+    };
+
+    let dest = match env::var("RETRO_GAMES") {
+        Ok(val) => val,
+        Err(e) => return Err(format!("RETRO_GAMES: {}", e)),
+    };
+
+    return Ok(Config {
+        src: src,
+        dest: dest,
+    });
+}
+
+fn main() {
+    let config = match load_configuration_from_environment() {
+        Ok(config) => config,
         Err(e) => {
-            eprintln!("RETRO_GAMES: {}", e);
-            process::exit(1);
+            eprintln!("error: {}", e);
+            process::exit(1)
         }
-    }
+    };
+    println!("source: {}", config.src);
+    println!("destination: {}", config.dest);
 }
