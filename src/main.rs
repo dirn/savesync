@@ -1,6 +1,11 @@
+extern crate notify;
+
+use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use std::env;
 use std::path::PathBuf;
 use std::process;
+use std::sync::mpsc::channel;
+use std::time::Duration;
 
 #[derive(Debug)]
 struct Config {
@@ -40,6 +45,14 @@ fn main() {
     };
 
     println!("{:?}", config);
+
+    match watch(&config) {
+        Ok(_) => println!("process complete"),
+        Err(e) => {
+            eprintln!("error: {}", e);
+            process::exit(1);
+        }
+    }
 }
 
 fn validate_config(config: &Config) -> Result<(), String> {
@@ -56,4 +69,28 @@ fn validate_config(config: &Config) -> Result<(), String> {
     }
 
     return Ok(());
+}
+
+fn watch(config: &Config) -> Result<(), String> {
+    // Create a channel to receive the events.
+    let (tx, rx) = channel();
+    println!("{:?}, {:?}", tx, rx);
+
+    let mut watcher: RecommendedWatcher = match Watcher::new(tx, Duration::from_secs(2)) {
+        Ok(val) => val,
+        Err(e) => return Err(format!("{}", e)),
+    };
+    println!("Watching {}", config.src.display());
+
+    match watcher.watch(config.src.as_path(), RecursiveMode::Recursive) {
+        Ok(_) => (),
+        Err(e) => return Err(format!("{}", e)),
+    }
+
+    loop {
+        match rx.recv() {
+            Ok(event) => println!("{:?}", event),
+            Err(e) => eprintln!("watch error: {}", e),
+        }
+    }
 }
