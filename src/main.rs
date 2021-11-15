@@ -1,5 +1,8 @@
+extern crate env_logger;
+extern crate log;
 extern crate notify;
 
+use log::{debug, error};
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use std::env;
 use std::path::PathBuf;
@@ -28,10 +31,12 @@ fn load_configuration_from_environment() -> Result<Config, String> {
 }
 
 fn main() {
+    env_logger::init();
+
     let config = match load_configuration_from_environment() {
         Ok(config) => config,
         Err(e) => {
-            eprintln!("error: {}", e);
+            error!("error: {}", e);
             process::exit(1)
         }
     };
@@ -39,17 +44,17 @@ fn main() {
     match validate_config(&config) {
         Ok(_) => (),
         Err(e) => {
-            eprintln!("error: {}", e);
+            error!("error: {}", e);
             process::exit(1)
         }
     };
 
-    println!("{:?}", config);
+    debug!("{:?}", config);
 
     match watch(&config) {
-        Ok(_) => println!("process complete"),
+        Ok(_) => debug!("process complete"),
         Err(e) => {
-            eprintln!("error: {}", e);
+            error!("error: {}", e);
             process::exit(1);
         }
     }
@@ -74,23 +79,20 @@ fn validate_config(config: &Config) -> Result<(), String> {
 fn watch(config: &Config) -> Result<(), String> {
     // Create a channel to receive the events.
     let (tx, rx) = channel();
-    println!("{:?}, {:?}", tx, rx);
 
     let mut watcher: RecommendedWatcher = match Watcher::new(tx, Duration::from_secs(2)) {
         Ok(val) => val,
         Err(e) => return Err(format!("{}", e)),
     };
-    println!("Watching {}", config.src.display());
-
     match watcher.watch(config.src.as_path(), RecursiveMode::Recursive) {
-        Ok(_) => (),
+        Ok(_) => debug!("Watching {}", config.src.display()),
         Err(e) => return Err(format!("{}", e)),
     }
 
     loop {
         match rx.recv() {
-            Ok(event) => println!("{:?}", event),
-            Err(e) => eprintln!("watch error: {}", e),
+            Ok(event) => debug!("{:?}", event),
+            Err(e) => error!("watch error: {}", e),
         }
     }
 }
