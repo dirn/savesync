@@ -2,8 +2,8 @@ extern crate env_logger;
 extern crate log;
 extern crate notify;
 
-use log::{debug, error};
-use notify::{RecommendedWatcher, RecursiveMode, Watcher};
+use log::{debug, error, info};
+use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 use std::env;
 use std::path::PathBuf;
 use std::process;
@@ -14,6 +14,10 @@ use std::time::Duration;
 struct Config {
     src: PathBuf,
     dest: PathBuf,
+}
+
+fn copy_to_dest(config: &Config, path: PathBuf) {
+    info!("copying {} to {}", path.display(), config.dest.display())
 }
 
 fn load_configuration_from_environment() -> Result<Config, String> {
@@ -91,7 +95,10 @@ fn watch(config: &Config) -> Result<(), String> {
 
     loop {
         match rx.recv() {
-            Ok(event) => debug!("{:?}", event),
+            Ok(DebouncedEvent::Create(path) | DebouncedEvent::Write(path)) => {
+                copy_to_dest(&config, path)
+            }
+            Ok(event) => debug!("skipping {:?}", event),
             Err(e) => error!("watch error: {}", e),
         }
     }
