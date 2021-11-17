@@ -4,6 +4,7 @@ extern crate notify;
 
 use log::{debug, error, info};
 use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
+use pathdiff::diff_paths;
 use std::env;
 use std::path::PathBuf;
 use std::process;
@@ -17,7 +18,9 @@ struct Config {
 }
 
 fn copy_to_dest(config: &Config, path: PathBuf) {
-    info!("copying {} to {}", path.display(), config.dest.display())
+    info!("copying {} to {}", path.display(), config.dest.display());
+    let relative_path = make_path_relative_to_src(&config, &path);
+    debug!("{}", relative_path.display());
 }
 
 fn load_configuration_from_environment() -> Result<Config, String> {
@@ -62,6 +65,10 @@ fn main() {
             process::exit(1);
         }
     }
+}
+
+fn make_path_relative_to_src(config: &Config, path: &PathBuf) -> PathBuf {
+    return diff_paths(path, &config.src).expect("error: could not parse path");
 }
 
 fn validate_config(config: &Config) -> Result<(), String> {
