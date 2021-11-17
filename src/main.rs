@@ -6,6 +6,7 @@ use log::{debug, error, info};
 use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 use pathdiff::diff_paths;
 use std::env;
+use std::fs::create_dir_all;
 use std::path::PathBuf;
 use std::process;
 use std::sync::mpsc::channel;
@@ -17,16 +18,28 @@ struct Config {
     dest: PathBuf,
 }
 
+fn create_parent_path_if_missing(path: PathBuf) {
+    if let Some(parent_path) = path.parent() {
+        debug!("maybe creating {}", parent_path.display());
+        create_dir_all(parent_path).ok();
+    }
+}
+
 fn copy_to_dest(config: &Config, path: PathBuf) {
     if path.is_dir() {
         debug!("skipping {}", path.display());
         return;
     }
+
     info!("copying {} to {}", path.display(), config.dest.display());
+
     let relative_path = make_path_relative_to_src(&config, &path);
     debug!("relative path: {}", relative_path.display());
+
     let dest_path = make_dest_path(&config, relative_path);
     debug!("destination: {}", dest_path.display());
+
+    create_parent_path_if_missing(dest_path);
 }
 
 fn load_configuration_from_environment() -> Result<Config, String> {
