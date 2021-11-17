@@ -24,7 +24,9 @@ fn copy_to_dest(config: &Config, path: PathBuf) {
     }
     info!("copying {} to {}", path.display(), config.dest.display());
     let relative_path = make_path_relative_to_src(&config, &path);
-    debug!("{}", relative_path.display());
+    debug!("relative path: {}", relative_path.display());
+    let dest_path = make_dest_path(&config, relative_path);
+    debug!("destination: {}", dest_path.display());
 }
 
 fn load_configuration_from_environment() -> Result<Config, String> {
@@ -69,6 +71,10 @@ fn main() {
             process::exit(1);
         }
     }
+}
+
+fn make_dest_path(config: &Config, relative_path: PathBuf) -> PathBuf {
+    return config.dest.join(relative_path);
 }
 
 fn make_path_relative_to_src(config: &Config, path: &PathBuf) -> PathBuf {
