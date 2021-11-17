@@ -1,7 +1,4 @@
-extern crate env_logger;
-extern crate log;
-extern crate notify;
-
+use env_logger;
 use log::{debug, error, info};
 use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 use pathdiff::diff_paths;
