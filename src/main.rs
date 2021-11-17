@@ -18,6 +18,10 @@ struct Config {
 }
 
 fn copy_to_dest(config: &Config, path: PathBuf) {
+    if path.is_dir() {
+        debug!("skipping {}", path.display());
+        return;
+    }
     info!("copying {} to {}", path.display(), config.dest.display());
     let relative_path = make_path_relative_to_src(&config, &path);
     debug!("{}", relative_path.display());
