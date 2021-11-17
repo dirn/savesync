@@ -3,7 +3,7 @@ use log::{debug, error, info};
 use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 use pathdiff::diff_paths;
 use std::env;
-use std::fs::{copy, create_dir_all};
+use std::fs::{copy, create_dir_all, remove_file};
 use std::path::PathBuf;
 use std::process;
 use std::sync::mpsc::channel;
@@ -37,6 +37,11 @@ fn copy_to_dest(config: &Config, path: PathBuf) {
 
 fn create_parent_path_if_missing(path: &PathBuf) {
     if let Some(parent_path) = path.parent() {
+        if parent_path.is_file() {
+            remove_file(parent_path).ok();
+            debug!("removed {} to replace with folder", parent_path.display());
+        }
+
         debug!("maybe creating {}", parent_path.display());
         create_dir_all(parent_path).ok();
     }
