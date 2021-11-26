@@ -12,24 +12,12 @@ use std::time::Duration;
 struct Config {
     src: PathBuf,
     dest: PathBuf,
+    bootstrap: bool,
 }
 
-fn bootstrap(config: &Config) -> Result<(), String> {
-    let mut args = env::args();
-    debug!("started with {:?}", args);
-
-    if args.len() > 2 {
-        return Err(format!("expected 0 or 1 arguments, got {}", args.len() - 1));
-    } else if args.len() == 2 {
-        let flag = args.nth(1).unwrap();
-        if flag != "--bootstrap" {
-            return Err(format!("expected '--bootstrap', got '{}'", flag));
-        }
-
-        rsync(&config, PathBuf::from(""));
-    }
-
-    Ok(())
+fn bootstrap(config: &Config) {
+    info!("bootstrapping");
+    rsync(&config, PathBuf::from(""));
 }
 
 fn copy_to_dest(config: &Config, path: PathBuf) {
@@ -55,7 +43,25 @@ fn load_configuration_from_environment() -> Result<Config, String> {
         Err(e) => return Err(format!("RETRO_GAMES: {}", e)),
     };
 
-    return Ok(Config { src, dest });
+    let maybe_bootstrap = match env::var("RETRO_BOOTSTRAP") {
+        Ok(val) => val.to_lowercase(),
+        Err(_) => "".to_string(),
+    };
+    // This list is intentionally a superset of what's documented.
+    let bootstrap = vec![
+        "1".to_string(),
+        "t".into(),
+        "true".into(),
+        "y".into(),
+        "yes".into(),
+    ]
+    .contains(&maybe_bootstrap);
+
+    return Ok(Config {
+        src,
+        dest,
+        bootstrap,
+    });
 }
 
 fn main() {
@@ -79,12 +85,8 @@ fn main() {
 
     debug!("{:?}", config);
 
-    match bootstrap(&config) {
-        Ok(_) => debug!("bootstrap complete"),
-        Err(e) => {
-            error!("error: {}", e);
-            process::exit(1);
-        }
+    if config.bootstrap {
+        bootstrap(&config);
     }
 
     match watch(&config) {
