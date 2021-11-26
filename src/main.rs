@@ -23,20 +23,7 @@ fn copy_to_dest(config: &Config, path: PathBuf) {
     let relative_path = make_path_relative_to_src(&config, &path);
     debug!("relative path: {}", relative_path.display());
 
-    info!("syncing {}", path.display());
-    let mut cmd = process::Command::new("rsync");
-    let output = cmd
-        .arg("--archive")
-        .arg("--update")
-        .arg("--relative")
-        .arg(&config.src.join(".").join(relative_path))
-        .arg(&config.dest)
-        .output();
-
-    match output {
-        Ok(value) => debug!("{:?}", value),
-        Err(e) => error!("{}", e),
-    }
+    rsync(&config, relative_path);
 }
 
 fn load_configuration_from_environment() -> Result<Config, String> {
@@ -85,6 +72,24 @@ fn main() {
 
 fn make_path_relative_to_src(config: &Config, path: &PathBuf) -> PathBuf {
     return diff_paths(path, &config.src).expect("error: could not parse path");
+}
+
+fn rsync(config: &Config, path: PathBuf) {
+    info!("syncing {}", path.display());
+
+    let mut cmd = process::Command::new("rsync");
+    let output = cmd
+        .arg("--archive")
+        .arg("--update")
+        .arg("--relative")
+        .arg(&config.src.join(".").join(path))
+        .arg(&config.dest)
+        .output();
+
+    match output {
+        Ok(value) => debug!("{:?}", value),
+        Err(e) => error!("{}", e),
+    }
 }
 
 fn validate_config(config: &Config) -> Result<(), String> {
