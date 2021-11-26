@@ -3,7 +3,6 @@ use log::{debug, error, info};
 use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 use pathdiff::diff_paths;
 use std::env;
-use std::fs::{copy, create_dir_all, remove_file};
 use std::path::PathBuf;
 use std::process;
 use std::sync::mpsc::channel;
@@ -24,26 +23,19 @@ fn copy_to_dest(config: &Config, path: PathBuf) {
     let relative_path = make_path_relative_to_src(&config, &path);
     debug!("relative path: {}", relative_path.display());
 
-    let dest_path = make_dest_path(&config, relative_path);
-    debug!("destination: {}", dest_path.display());
+    info!("syncing {}", path.display());
+    let mut cmd = process::Command::new("rsync");
+    let output = cmd
+        .arg("--archive")
+        .arg("--update")
+        .arg("--relative")
+        .arg(&config.src.join(".").join(relative_path))
+        .arg(&config.dest)
+        .output();
 
-    create_parent_path_if_missing(&dest_path);
-
-    match copy(&path, &dest_path) {
-        Ok(_) => info!("copied {} to {}", path.display(), dest_path.display()),
-        Err(e) => error!("error: {}", e),
-    }
-}
-
-fn create_parent_path_if_missing(path: &PathBuf) {
-    if let Some(parent_path) = path.parent() {
-        if parent_path.is_file() {
-            remove_file(parent_path).ok();
-            debug!("removed {} to replace with folder", parent_path.display());
-        }
-
-        debug!("maybe creating {}", parent_path.display());
-        create_dir_all(parent_path).ok();
+    match output {
+        Ok(value) => debug!("{:?}", value),
+        Err(e) => error!("{}", e),
     }
 }
 
@@ -89,10 +81,6 @@ fn main() {
             process::exit(1);
         }
     }
-}
-
-fn make_dest_path(config: &Config, relative_path: PathBuf) -> PathBuf {
-    return config.dest.join(relative_path);
 }
 
 fn make_path_relative_to_src(config: &Config, path: &PathBuf) -> PathBuf {
