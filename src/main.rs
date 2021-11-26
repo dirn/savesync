@@ -14,6 +14,24 @@ struct Config {
     dest: PathBuf,
 }
 
+fn bootstrap(config: &Config) -> Result<(), String> {
+    let mut args = env::args();
+    debug!("started with {:?}", args);
+
+    if args.len() > 2 {
+        return Err(format!("expected 0 or 1 arguments, got {}", args.len() - 1));
+    } else if args.len() == 2 {
+        let flag = args.nth(1).unwrap();
+        if flag != "--bootstrap" {
+            return Err(format!("expected '--bootstrap', got '{}'", flag));
+        }
+
+        rsync(&config, PathBuf::from(""));
+    }
+
+    Ok(())
+}
+
 fn copy_to_dest(config: &Config, path: PathBuf) {
     if path.is_dir() {
         debug!("skipping {}", path.display());
@@ -60,6 +78,14 @@ fn main() {
     };
 
     debug!("{:?}", config);
+
+    match bootstrap(&config) {
+        Ok(_) => debug!("bootstrap complete"),
+        Err(e) => {
+            error!("error: {}", e);
+            process::exit(1);
+        }
+    }
 
     match watch(&config) {
         Ok(_) => debug!("process complete"),
